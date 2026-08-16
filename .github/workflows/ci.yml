@@ -1,0 +1,33 @@
+name: DevOps CI-CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Validate Files
+      run: |
+        echo "Running file integrity checks..."
+        test -f index.html && echo "index.html exists." || exit 1
+        echo "Build and test completed successfully!"
+
+    - name: Notify Slack on Success
+      if: success()
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"✅ *Build Succeeded!* Pipeline ran successfully for commit on branch `main`."}' \
+        ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Notify Slack on Failure
+      if: failure()
+      run: |
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{"text":"❌ *Build Failed!* Check GitHub Actions logs for details."}' \
+        ${{ secrets.SLACK_WEBHOOK_URL }}
